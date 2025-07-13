@@ -1,184 +1,56 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>Diagnosis App</title>
+  <title>Name Entry</title>
   <style>
-    body{font-family:Arial;margin:20px;background:#f9f9f9;}
-    label{display:block;margin-top:12px;font-weight:bold;}
-    input, textarea, select{width:100%;padding:8px;margin-top:4px;border-radius:4px;border:1px solid #ccc;}
-    button{margin-top:16px;padding:10px 20px;background:#007bff;color:#fff;border:none;border-radius:4px;cursor:pointer;}
-    button:disabled{background:#aaa;}
-    .section{margin-bottom:24px;padding:12px;background:#fff;border-radius:6px;box-shadow:0 2px 4px rgba(0,0,0,0.1);}
-    .status{margin-top:12px;color:green;}
+    body { font-family: Arial; margin: 20px; }
+    input { padding: 8px; width: 200px; }
+    button { padding: 8px; background: #007bff; color: white; border: none; cursor: pointer; }
+    button:disabled { background: gray; }
+    .status { margin-top: 10px; color: green; }
+    .error { color: red; }
   </style>
 </head>
 <body>
-
-  <h1>🩺 Diagnosis App</h1>
-
-  <div id="step1" class="section">
-    <h2>Step 1: Patient Info + Chief Complaint</h2>
-    <label>Name:<input type="text" id="name"></label>
-    <label>Age:<input type="number" id="age"></label>
-    <label>Sex:
-      <select id="sex"><option>Male</option><option>Female</option><option>Other</option></select>
-    </label>
-    <label>Religion:<input type="text" id="religion"></label>
-    <label>Occupation:<input type="text" id="occupation"></label>
-    <label>Marital status:
-      <select id="marital_status"><option>Single</option><option>Married</option><option>Divorced</option><option>Widowed</option></select>
-    </label>
-    <label>Address:<textarea id="address"></textarea></label>
-    <label>Date of admission:<input type="date" id="date_of_admission"></label>
-    <label>Date of examination:<input type="date" id="date_of_examination"></label>
-    <label>Chief complaints:<textarea id="complaint"></textarea></label>
-    <button id="btn1" onclick="submitStep1()">Submit Step 1</button>
-    <div class="status" id="status1"></div>
-  </div>
-
-  <div id="step2" class="section" style="display:none;">
-    <h2>Step 2: Additional History</h2>
-    <label>Past Medical History:<textarea id="past_history"></textarea></label>
-    <label>Past Surgical History:<textarea id="past_surgery"></textarea></label>
-    <label>Drug History:<textarea id="drug_history"></textarea></label>
-    <label>Family History:<textarea id="family_history"></textarea></label>
-    <label>Socioeconomic & Personal History:<textarea id="socio_history"></textarea></label>
-    <label>Immunization History:<textarea id="immunization_history"></textarea></label>
-    <label>Obstetric History:<textarea id="obstetric_history"></textarea></label>
-    <button id="btn2" onclick="submitStep2()">Submit Step 2</button>
-    <div class="status" id="status2"></div>
-  </div>
-
-  <div id="step3" class="section" style="display:none;">
-    <h2>Step 3: Examinations</h2>
-    <label>General Examination:<textarea id="general_exam"></textarea></label>
-    <label>Systemic Examination:<textarea id="systemic_exam"></textarea></label>
-    <button id="btn3" onclick="submitStep3()">Submit Step 3</button>
-    <div class="status" id="status3"></div>
-  </div>
-
-  <div id="result" class="section" style="display:none;">
-    <h2>Submission Complete</h2>
-    <div id="finalMessage">All data has been successfully logged.</div>
-    <div class="status" id="status4"></div>
-  </div>
+  <h2>Enter Name</h2>
+  <input type="text" id="name" placeholder="Your name">
+  <button id="btnSubmit" onclick="submitForm()">Submit</button>
+  <div id="status" class="status"></div>
 
 <script>
-const scriptURL = "https://script.google.com/macros/s/AKfycbzunlp7rLJ9LyV_yq7eFV5LggAEMtw6HjzpumuVHwvLVKGXPyqeeMJgJ4Pg-hxBBlV-/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbxIQ-vlKSO9TdYUMmzylW0iaB6SusFLOQPe5XkYDUyHA0ZWQoky633_oHFeIg89Hjkm/exec";
 
-async function log(field, value, source = "User") {
+async function submitForm() {
+  var btn = document.getElementById("btnSubmit");
+  var status = document.getElementById("status");
+  var name = document.getElementById("name").value;
+
+  btn.disabled = true;
+  status.innerText = "Saving...";
+
   try {
-    const response = await fetch(scriptURL, {
-      method: "POST",
-      body: JSON.stringify({ field_name: field, input_output: value, source: source }),
-      headers: { "Content-Type": "application/json" },
-    });
-    if (!response.ok) {
-      throw new Error(`Failed to log ${field} to Google Sheets: ${response.status}`);
+    if (!name.trim()) {
+      status.innerText = "Please enter a name.";
+      status.className = "status error";
+      return;
     }
-    console.log(`Logged ${field} successfully`);
-    return response.json();
+    var response = await fetch(scriptURL, {
+      method: "POST",
+      body: JSON.stringify({ name: name }),
+      headers: { "Content-Type": "application/json" }
+    });
+    var text = await response.text();
+    if (text !== "Success") {
+      throw new Error(text);
+    }
+    status.innerText = "Name saved!";
+    status.className = "status";
+    document.getElementById("name").value = "";
   } catch (error) {
-    console.error(`Error logging ${field}:`, error);
-    alert(`Error logging data for ${field}. Please try again.`);
-    throw error;
+    status.innerText = "Error: " + error.message;
+    status.className = "status error";
   }
-}
-
-async function submitStep1() {
-  document.getElementById("btn1").disabled = true;
-  const fields = [
-    "Name",
-    "Age",
-    "Sex",
-    "Religion",
-    "Occupation",
-    "Marital status",
-    "Address",
-    "Date of admission",
-    "Date of examination",
-    "Chief complaints",
-  ];
-  const ids = [
-    "name",
-    "age",
-    "sex",
-    "religion",
-    "occupation",
-    "marital_status",
-    "address",
-    "date_of_admission",
-    "date_of_examination",
-    "complaint",
-  ];
-
-  try {
-    await Promise.all(
-      ids.map((id, i) => log(fields[i], document.getElementById(id).value))
-    );
-    document.getElementById("status1").innerText = "Step 1 data logged successfully.";
-    document.getElementById("step1").style.display = "none";
-    document.getElementById("step2").style.display = "block";
-    document.getElementById("status1").innerText = "";
-  } catch (error) {
-    document.getElementById("btn1").disabled = false;
-    document.getElementById("status1").innerText = "Error logging Step 1 data.";
-  }
-}
-
-async function submitStep2() {
-  document.getElementById("btn2").disabled = true;
-  const fields = [
-    "Past Medical History",
-    "Past Surgical History",
-    "Drug History",
-    "Family History",
-    "Socioeconomic & Personal History",
-    "Immunization History",
-    "Obstetric History",
-  ];
-  const ids = [
-    "past_history",
-    "past_surgery",
-    "drug_history",
-    "family_history",
-    "socio_history",
-    "immunization_history",
-    "obstetric_history",
-  ];
-
-  try {
-    await Promise.all(
-      ids.map((id, i) => log(fields[i], document.getElementById(id).value))
-    );
-    document.getElementById("status2").innerText = "Step 2 data logged successfully.";
-    document.getElementById("step2").style.display = "none";
-    document.getElementById("step3").style.display = "block";
-    document.getElementById("status2").innerText = "";
-  } catch (error) {
-    document.getElementById("btn2").disabled = false;
-    document.getElementById("status2").innerText = "Error logging Step 2 data.";
-  }
-}
-
-async function submitStep3() {
-  document.getElementById("btn3").disabled = true;
-  const fields = ["General Examination", "Systemic Examination"];
-  const ids = ["general_exam", "systemic_exam"];
-
-  try {
-    await Promise.all(
-      ids.map((id, i) => log(fields[i], document.getElementById(id).value))
-    );
-    document.getElementById("status3").innerText = "Step 3 data logged successfully.";
-    document.getElementById("step3").style.display = "none";
-    document.getElementById("result").style.display = "block";
-    document.getElementById("status4").innerText = "Done!";
-  } catch (error) {
-    document.getElementById("btn3").disabled = false;
-    document.getElementById("status3").innerText = "Error logging Step 3 data.";
-  }
+  btn.disabled = false;
 }
 </script>
 </body>
