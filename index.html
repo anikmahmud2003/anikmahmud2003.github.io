@@ -47,7 +47,7 @@
   </div>
 
 <script>
-const openaiKey = "Bearer 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"; // Replace with your actual OpenAI API key
+const openaiKey = "Bearer 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"; // Replace with your actual key
 let followupQuestions = [];
 
 async function callOpenAI(messages) {
@@ -57,7 +57,10 @@ async function callOpenAI(messages) {
       headers: {"Content-Type": "application/json", "Authorization": openaiKey},
       body: JSON.stringify({model: "gpt-3.5-turbo", messages, temperature: 0.7})
     });
-    if (!resp.ok) throw new Error(`HTTP error! Status: ${resp.status}`);
+    if (!resp.ok) {
+      const errorText = await resp.text();
+      throw new Error(`HTTP error! Status: ${resp.status}. Details: ${errorText}`);
+    }
     const json = await resp.json();
     if (!json.choices || !json.choices.length) throw new Error("No choices in API response");
     return json.choices[0].message.content;
@@ -89,7 +92,7 @@ async function submitStep1() {
   }
   followupQuestions = aiText.split(/\n/).filter(q => q.trim()).map((q, i) => ({qid: i, text: q}));
   const container = document.getElementById("aiQuestions");
-  container.innerHTML = ""; // Clear previous questions
+  container.innerHTML = "";
   followupQuestions.forEach(q => {
     const label = document.createElement("label");
     label.innerText = q.text;
