@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Diagnosis App</title>
+  <style>
+    body { font-family: Arial; margin: 20px; background: #f9f9f9; }
+    label { display: block; margin-top: 12px; font-weight: bold; }
+    input, textarea, select { width: 100%; padding: 8px; margin-top: 4px; border-radius: 4px; border: 1px solid #ccc; }
+    button { margin-top: 16px; padding: 10px 20px; background: #007bff; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    button:disabled { background: #aaa; }
+    .section { margin-bottom: 24px; padding: 12px; background: #fff; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .status { margin-top: 12px; color: green; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+
+  <h1>🩺 Diagnosis App</h1>
+
+  <div id="step1" class="section">
+    <h2>Step 1: Patient Info + Chief Complaint</h2>
+    <label>Name:<input type="text" id="name"></label>
+    <label>Age:<input type="number" id="age"></label>
+    <label>Sex:
+      <select id="sex"><option>Male</option><option>Female</option><option>Other</option></select>
+    </label>
+    <label>Chief complaints:<textarea id="complaint"></textarea></label>
+    <button id="btn1" onclick="submitStep1()">Submit Step 1</button>
+    <div class="status" id="status1"></div>
+    <div class="error" id="error1"></div>
+  </div>
+
+  <div id="step2" class="section" style="display:none;">
+    <h2>Step 2: Answer AI Follow‑up Questions</h2>
+    <div id="aiQuestions"></div>
+    <button id="btn2" onclick="submitStep2()">Submit Answers</button>
+    <div class="status" id="status2"></div>
+    <div class="error" id="error2"></div>
+  </div>
+
+  <div id="result" class="section" style="display:none;">
+    <h2>AI Diagnosis & Plan</h2>
+    <div id="finalAI"></div>
+    <div class="status" id="status3"></div>
+    <div class="error" id="error3"></div>
+  </div>
+
+<script>
+const openaiKey = "Bearer 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"; // Replace with your actual OpenAI API key
+let followupQuestions = [];
+
+async function callOpenAI(messages) {
+  try {
+    const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {"Content-Type": "application/json", "Authorization": openaiKey},
+      body: JSON.stringify({model: "gpt-3.5-turbo", messages, temperature: 0.7})
+    });
+    if (!resp.ok) throw new Error(`HTTP error! Status: ${resp.status}`);
+    const json = await resp.json();
+    if (!json.choices || !json.choices.length) throw new Error("No choices in API response");
+    return json.choices[0].message.content;
+  } catch (error) {
+    console.error("API Error:", error);
+    return `Error: Unable to contact AI. Details: ${error.message}. Check console for more info.`;
+  }
+}
+
+async function submitStep1() {
+  document.getElementById("btn1").disabled = true;
+  document.getElementById("status1").innerText = "Contacting AI...";
+  document.getElementById("error1").innerText = "";
+  const complaint = document.getElementById("complaint").value.trim();
+  if (!complaint) {
+    document.getElementById("error1").innerText = "Please enter chief complaints.";
+    document.getElementById("btn1").disabled = false;
+    return;
+  }
+  const prompt = [
+    {role: "system", content: "You are a helpful medical assistant."},
+    {role: "user", content: `Patient has chief complaints: ${complaint}. Please ask 3-5 follow-up questions to elaborate history of present illness.`}
+  ];
+  const aiText = await callOpenAI(prompt);
+  if (aiText.includes("Error")) {
+    document.getElementById("error1").innerText = aiText;
+    document.getElementById("btn1").disabled = false;
+    return;
+  }
+  followupQuestions = aiText.split(/\n/).filter(q => q.trim()).map((q, i) => ({qid: i, text: q}));
+  const container = document.getElementById("aiQuestions");
+  container.innerHTML = ""; // Clear previous questions
+  followupQuestions.forEach(q => {
+    const label = document.createElement("label");
+    label.innerText = q.text;
+    const ta = document.createElement("textarea");
+    ta.id = "ans" + q.qid;
+    container.appendChild(label);
+    container.appendChild(ta);
+  });
+  document.getElementById("step1").style.display = "none";
+  document.getElementById("step2").style.display = "block";
+  document.getElementById("status1").innerText = "";
+}
+
+async function submitStep2() {
+  document.getElementById("btn2").disabled = true;
+  document.getElementById("status2").innerText = "Generating diagnosis...";
+  document.getElementById("error2").innerText = "";
+  const userHistory = followupQuestions.map(q => "Q: " + q.text + "\nA: " + document.getElementById("ans" + q.qid).value.trim()).join("\n");
+  if (followupQuestions.some(q => !document.getElementById("ans" + q.qid).value.trim())) {
+    document.getElementById("error2").innerText = "Please answer all follow-up questions.";
+    document.getElementById("btn2").disabled = false;
+    return;
+  }
+  const complaint = document.getElementById("complaint").value.trim();
+  const prompt = [
+    {role: "system", content: "You are a smart medical assistant."},
+    {role: "user", content: `Presenting complaint: ${complaint}. Follow-up answers:\n${userHistory}\nPlease provide:\n1. Provisional diagnosis\n2. Differential diagnoses with percentage likelihood\n3. Investigations\n4. Management plan\n`}
+  ];
+  const finalText = await callOpenAI(prompt);
+  document.getElementById("finalAI").innerText = finalText;
+  if (finalText.includes("Error")) {
+    document.getElementById("error2").innerText = finalText;
+  } else {
+    document.getElementById("step2").style.display = "none";
+    document.getElementById("result").style.display = "block";
+    document.getElementById("status3").innerText = "Done!";
+  }
+  document.getElementById("status2").innerText = "";
+}
+</script>
+</body>
+</html>
