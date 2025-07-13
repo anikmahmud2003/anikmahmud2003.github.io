@@ -4,14 +4,13 @@
   <meta charset="utf-8">
   <title>Diagnosis App</title>
   <style>
-    body { font-family: Arial; margin: 20px; background: #f9f9f9; }
-    label { display: block; margin-top: 12px; font-weight: bold; }
-    input, textarea, select { width: 100%; padding: 8px; margin-top: 4px; border-radius: 4px; border: 1px solid #ccc; }
-    button { margin-top: 16px; padding: 10px 20px; background: #007bff; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
-    button:disabled { background: #aaa; }
-    .section { margin-bottom: 24px; padding: 12px; background: #fff; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .status { margin-top: 12px; color: green; }
-    .error { color: red; }
+    body{font-family:Arial;margin:20px;background:#f9f9f9;}
+    label{display:block;margin-top:12px;font-weight:bold;}
+    input, textarea, select{width:100%;padding:8px;margin-top:4px;border-radius:4px;border:1px solid #ccc;}
+    button{margin-top:16px;padding:10px 20px;background:#007bff;color:#fff;border:none;border-radius:4px;cursor:pointer;}
+    button:disabled{background:#aaa;}
+    .section{margin-bottom:24px;padding:12px;background:#fff;border-radius:6px;box-shadow:0 2px 4px rgba(0,0,0,0.1);}
+    .status{margin-top:12px;color:green;}
   </style>
 </head>
 <body>
@@ -25,112 +24,161 @@
     <label>Sex:
       <select id="sex"><option>Male</option><option>Female</option><option>Other</option></select>
     </label>
+    <label>Religion:<input type="text" id="religion"></label>
+    <label>Occupation:<input type="text" id="occupation"></label>
+    <label>Marital status:
+      <select id="marital_status"><option>Single</option><option>Married</option><option>Divorced</option><option>Widowed</option></select>
+    </label>
+    <label>Address:<textarea id="address"></textarea></label>
+    <label>Date of admission:<input type="date" id="date_of_admission"></label>
+    <label>Date of examination:<input type="date" id="date_of_examination"></label>
     <label>Chief complaints:<textarea id="complaint"></textarea></label>
     <button id="btn1" onclick="submitStep1()">Submit Step 1</button>
     <div class="status" id="status1"></div>
-    <div class="error" id="error1"></div>
   </div>
 
   <div id="step2" class="section" style="display:none;">
-    <h2>Step 2: Answer AI Follow‑up Questions</h2>
-    <div id="aiQuestions"></div>
-    <button id="btn2" onclick="submitStep2()">Submit Answers</button>
+    <h2>Step 2: Additional History</h2>
+    <label>Past Medical History:<textarea id="past_history"></textarea></label>
+    <label>Past Surgical History:<textarea id="past_surgery"></textarea></label>
+    <label>Drug History:<textarea id="drug_history"></textarea></label>
+    <label>Family History:<textarea id="family_history"></textarea></label>
+    <label>Socioeconomic & Personal History:<textarea id="socio_history"></textarea></label>
+    <label>Immunization History:<textarea id="immunization_history"></textarea></label>
+    <label>Obstetric History:<textarea id="obstetric_history"></textarea></label>
+    <button id="btn2" onclick="submitStep2()">Submit Step 2</button>
     <div class="status" id="status2"></div>
-    <div class="error" id="error2"></div>
+  </div>
+
+  <div id="step3" class="section" style="display:none;">
+    <h2>Step 3: Examinations</h2>
+    <label>General Examination:<textarea id="general_exam"></textarea></label>
+    <label>Systemic Examination:<textarea id="systemic_exam"></textarea></label>
+    <button id="btn3" onclick="submitStep3()">Submit Step 3</button>
+    <div class="status" id="status3"></div>
   </div>
 
   <div id="result" class="section" style="display:none;">
-    <h2>AI Diagnosis & Plan</h2>
-    <div id="finalAI"></div>
-    <div class="status" id="status3"></div>
-    <div class="error" id="error3"></div>
+    <h2>Submission Complete</h2>
+    <div id="finalMessage">All data has been successfully logged.</div>
+    <div class="status" id="status4"></div>
   </div>
 
 <script>
-const openaiKey = "Bearer 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"; // Replace with your actual key
-let followupQuestions = [];
+const scriptURL = "https://script.google.com/macros/s/AKfycbzunlp7rLJ9LyV_yq7eFV5LggAEMtw6HjzpumuVHwvLVKGXPyqeeMJgJ4Pg-hxBBlV-/exec";
 
-async function callOpenAI(messages) {
+async function log(field, value, source = "User") {
   try {
-    const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch(scriptURL, {
       method: "POST",
-      headers: {"Content-Type": "application/json", "Authorization": openaiKey},
-      body: JSON.stringify({model: "gpt-3.5-turbo", messages, temperature: 0.7})
+      body: JSON.stringify({ field_name: field, input_output: value, source: source }),
+      headers: { "Content-Type": "application/json" },
     });
-    if (!resp.ok) {
-      const errorText = await resp.text();
-      throw new Error(`HTTP error! Status: ${resp.status}. Details: ${errorText}`);
+    if (!response.ok) {
+      throw new Error(`Failed to log ${field} to Google Sheets: ${response.status}`);
     }
-    const json = await resp.json();
-    if (!json.choices || !json.choices.length) throw new Error("No choices in API response");
-    return json.choices[0].message.content;
+    console.log(`Logged ${field} successfully`);
+    return response.json();
   } catch (error) {
-    console.error("API Error:", error);
-    return `Error: Unable to contact AI. Details: ${error.message}. Check console for more info.`;
+    console.error(`Error logging ${field}:`, error);
+    alert(`Error logging data for ${field}. Please try again.`);
+    throw error;
   }
 }
 
 async function submitStep1() {
   document.getElementById("btn1").disabled = true;
-  document.getElementById("status1").innerText = "Contacting AI...";
-  document.getElementById("error1").innerText = "";
-  const complaint = document.getElementById("complaint").value.trim();
-  if (!complaint) {
-    document.getElementById("error1").innerText = "Please enter chief complaints.";
-    document.getElementById("btn1").disabled = false;
-    return;
-  }
-  const prompt = [
-    {role: "system", content: "You are a helpful medical assistant."},
-    {role: "user", content: `Patient has chief complaints: ${complaint}. Please ask 3-5 follow-up questions to elaborate history of present illness.`}
+  const fields = [
+    "Name",
+    "Age",
+    "Sex",
+    "Religion",
+    "Occupation",
+    "Marital status",
+    "Address",
+    "Date of admission",
+    "Date of examination",
+    "Chief complaints",
   ];
-  const aiText = await callOpenAI(prompt);
-  if (aiText.includes("Error")) {
-    document.getElementById("error1").innerText = aiText;
+  const ids = [
+    "name",
+    "age",
+    "sex",
+    "religion",
+    "occupation",
+    "marital_status",
+    "address",
+    "date_of_admission",
+    "date_of_examination",
+    "complaint",
+  ];
+
+  try {
+    await Promise.all(
+      ids.map((id, i) => log(fields[i], document.getElementById(id).value))
+    );
+    document.getElementById("status1").innerText = "Step 1 data logged successfully.";
+    document.getElementById("step1").style.display = "none";
+    document.getElementById("step2").style.display = "block";
+    document.getElementById("status1").innerText = "";
+  } catch (error) {
     document.getElementById("btn1").disabled = false;
-    return;
+    document.getElementById("status1").innerText = "Error logging Step 1 data.";
   }
-  followupQuestions = aiText.split(/\n/).filter(q => q.trim()).map((q, i) => ({qid: i, text: q}));
-  const container = document.getElementById("aiQuestions");
-  container.innerHTML = "";
-  followupQuestions.forEach(q => {
-    const label = document.createElement("label");
-    label.innerText = q.text;
-    const ta = document.createElement("textarea");
-    ta.id = "ans" + q.qid;
-    container.appendChild(label);
-    container.appendChild(ta);
-  });
-  document.getElementById("step1").style.display = "none";
-  document.getElementById("step2").style.display = "block";
-  document.getElementById("status1").innerText = "";
 }
 
 async function submitStep2() {
   document.getElementById("btn2").disabled = true;
-  document.getElementById("status2").innerText = "Generating diagnosis...";
-  document.getElementById("error2").innerText = "";
-  const userHistory = followupQuestions.map(q => "Q: " + q.text + "\nA: " + document.getElementById("ans" + q.qid).value.trim()).join("\n");
-  if (followupQuestions.some(q => !document.getElementById("ans" + q.qid).value.trim())) {
-    document.getElementById("error2").innerText = "Please answer all follow-up questions.";
-    document.getElementById("btn2").disabled = false;
-    return;
-  }
-  const complaint = document.getElementById("complaint").value.trim();
-  const prompt = [
-    {role: "system", content: "You are a smart medical assistant."},
-    {role: "user", content: `Presenting complaint: ${complaint}. Follow-up answers:\n${userHistory}\nPlease provide:\n1. Provisional diagnosis\n2. Differential diagnoses with percentage likelihood\n3. Investigations\n4. Management plan\n`}
+  const fields = [
+    "Past Medical History",
+    "Past Surgical History",
+    "Drug History",
+    "Family History",
+    "Socioeconomic & Personal History",
+    "Immunization History",
+    "Obstetric History",
   ];
-  const finalText = await callOpenAI(prompt);
-  document.getElementById("finalAI").innerText = finalText;
-  if (finalText.includes("Error")) {
-    document.getElementById("error2").innerText = finalText;
-  } else {
+  const ids = [
+    "past_history",
+    "past_surgery",
+    "drug_history",
+    "family_history",
+    "socio_history",
+    "immunization_history",
+    "obstetric_history",
+  ];
+
+  try {
+    await Promise.all(
+      ids.map((id, i) => log(fields[i], document.getElementById(id).value))
+    );
+    document.getElementById("status2").innerText = "Step 2 data logged successfully.";
     document.getElementById("step2").style.display = "none";
-    document.getElementById("result").style.display = "block";
-    document.getElementById("status3").innerText = "Done!";
+    document.getElementById("step3").style.display = "block";
+    document.getElementById("status2").innerText = "";
+  } catch (error) {
+    document.getElementById("btn2").disabled = false;
+    document.getElementById("status2").innerText = "Error logging Step 2 data.";
   }
-  document.getElementById("status2").innerText = "";
+}
+
+async function submitStep3() {
+  document.getElementById("btn3").disabled = true;
+  const fields = ["General Examination", "Systemic Examination"];
+  const ids = ["general_exam", "systemic_exam"];
+
+  try {
+    await Promise.all(
+      ids.map((id, i) => log(fields[i], document.getElementById(id).value))
+    );
+    document.getElementById("status3").innerText = "Step 3 data logged successfully.";
+    document.getElementById("step3").style.display = "none";
+    document.getElementById("result").style.display = "block";
+    document.getElementById("status4").innerText = "Done!";
+  } catch (error) {
+    document.getElementById("btn3").disabled = false;
+    document.getElementById("status3").innerText = "Error logging Step 3 data.";
+  }
 }
 </script>
 </body>
