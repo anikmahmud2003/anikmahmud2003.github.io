@@ -1,57 +1,298 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Name Entry</title>
+  <title>Diagnosis Assistant</title>
   <style>
-    body { font-family: Arial; margin: 20px; }
-    input { padding: 8px; width: 200px; }
-    button { padding: 8px; background: #007bff; color: white; border: none; cursor: pointer; }
-    button:disabled { background: gray; }
-    .status { margin-top: 10px; color: green; }
-    .error { color: red; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f9f9f9;
+      padding: 20px;
+      max-width: 900px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+      color: #0077cc;
+      margin-bottom: 30px;
+    }
+    h2 {
+      background: #0077cc;
+      color: white;
+      padding: 10px;
+      border-radius: 6px;
+    }
+    textarea, input, select {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      resize: vertical;
+      font-size: 14px;
+    }
+    button {
+      padding: 12px 20px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    .section {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      margin-bottom: 30px;
+    }
+    .hidden { display: none; }
+    pre {
+      background-color: #f0f0f0;
+      padding: 15px;
+      border-radius: 6px;
+      white-space: pre-wrap;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
-  <h2>Enter Name</h2>
-  <input type="text" id="name" placeholder="Your name">
-  <button id="btnSubmit" onclick="submitForm()">Submit</button>
-  <div id="status" class="status"></div>
+  <h1>Anik's Diagnosis Assistant</h1>
 
-<script>
-const scriptURL = "https://script.google.com/macros/s/AKfycbxIQ-vlKSO9TdYUMmzylW0iaB6SusFLOQPe5XkYDUyHA0ZWQoky633_oHFeIg89Hjkm/exec";
+  <div class="section" id="initial-section">
+    <h2>Step 1: Patient Basic Info</h2>
+    <form id="step1Form">
+      <input name="Name" placeholder="Name">
+      <input name="Age" type="number" placeholder="Age">
+      <select name="Sex">
+        <option value="">Select Sex</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Other">Other</option>
+      </select>
+      <select name="Religion">
+        <option value="">Select Religion</option>
+        <option value="Islam">Islam</option>
+        <option value="Hinduism">Hinduism</option>
+        <option value="Christianity">Christianity</option>
+        <option value="Buddhism">Buddhism</option>
+        <option value="Other">Other</option>
+      </select>
+      <input name="Occupation" placeholder="Occupation">
+      <select name="Marital status">
+        <option value="">Select Marital Status</option>
+        <option value="Single">Single</option>
+        <option value="Married">Married</option>
+        <option value="Divorced">Divorced</option>
+        <option value="Widowed">Widowed</option>
+      </select>
+      <input name="Address" placeholder="Address">
+      <input name="Date of admission" type="date">
+      <input name="Date of examination" type="date">
+      <textarea name="Chief complaints" placeholder="Chief complaints (e.g., fever, cough for 3 days)" required></textarea>
+      <button type="submit">➡️ Generate Follow-up Questions</button>
+    </form>
+  </div>
 
-async function submitForm() {
-  var btn = document.getElementById("btnSubmit");
-  var status = document.getElementById("status");
-  var name = document.getElementById("name").value;
+  <div class="section hidden" id="followup-section">
+    <h2>Step 2: Answer AI Follow-up Questions</h2>
+    <pre id="followup-questions">⏳ Loading...</pre>
+    <textarea id="followupAnswers" rows="8" placeholder="Answer the follow-up questions here..."></textarea>
+    <button id="nextToDetails">➡️ Continue to Clinical History</button>
+  </div>
 
-  btn.disabled = true;
-  status.innerText = "Saving...";
+  <div class="section hidden" id="details-section">
+    <h2>Step 3: Fill Clinical History</h2>
+    <form id="detailsForm">
+      <textarea name="History of present illness" placeholder="History of present illness"></textarea>
+      <textarea name="Past Medical History" placeholder="Past Medical History"></textarea>
+      <textarea name="Past Surgical History" placeholder="Past Surgical History"></textarea>
+      <textarea name="Drug History" placeholder="Drug History"></textarea>
+      <textarea name="Family History" placeholder="Family History"></textarea>
+      <textarea name="Socioeconomic & Personal History" placeholder="Socioeconomic & Personal History"></textarea>
+      <textarea name="Immunization History" placeholder="Immunization History"></textarea>
+      <textarea name="Obstetric History" placeholder="Obstetric History"></textarea>
+      <textarea name="General Examination" placeholder="General Examination"></textarea>
+      <textarea name="Systemic Examination" placeholder="Systemic Examination"></textarea>
+      <button type="submit">🚀 Submit for Final Diagnosis</button>
+    </form>
+  </div>
 
-  try {
-    if (!name.trim()) {
-      status.innerText = "Please enter a name.";
-      status.className = "status error";
-      return;
+  <div class="section hidden" id="ai-output">
+    <h2>🧠 Final AI Diagnosis</h2>
+    <pre id="outputText">⏳ Loading...</pre>
+  </div>
+
+  <div class="section hidden" id="save-section">
+    <h2>💾 Save to Google Sheet</h2>
+    <button id="saveToSheet">Save to Sheet</button>
+    <p id="saveStatus"></p>
+  </div>
+
+  <script>
+    const step1Form = document.getElementById('step1Form');
+    const followupSection = document.getElementById('followup-section');
+    const followupQuestions = document.getElementById('followup-questions');
+    const followupAnswers = document.getElementById('followupAnswers');
+    const detailsSection = document.getElementById('details-section');
+    const detailsForm = document.getElementById('detailsForm');
+    const output = document.getElementById('outputText');
+    const outputDiv = document.getElementById('ai-output');
+    const nextToDetails = document.getElementById('nextToDetails');
+    const saveSection = document.getElementById('save-section');
+    const saveBtn = document.getElementById('saveToSheet');
+    const saveStatus = document.getElementById('saveStatus');
+
+    const API_KEY = "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";
+    const MODEL_ID = "deepseek/deepseek-chat-v3-0324:free";
+    const GOOGLE_SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbx_5GTvBImCgBhGZWCRmyM2zFXyRpSWL_ajk8biWIxJ1JQubZsmLsXxfaCoRG8t4daN/exec";
+
+    let allData = {};
+
+    async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
+      for (let i = 0; i < retries; i++) {
+        try {
+          const res = await fetch(url, options);
+          if (res.status === 429) {
+            await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+            continue;
+          }
+          if (!res.ok) {
+            let errorText = await res.text();
+            throw new Error(`HTTP error: ${res.status} - ${errorText}`);
+          }
+          return await res.json();
+        } catch (error) {
+          if (i === retries - 1) throw error;
+        }
+      }
+      throw new Error("Max retries reached");
     }
-    var response = await fetch(scriptURL, {
-      method: "POST",
-      body: JSON.stringify({ name: name }),
-      headers: { "Content-Type": "application/json" }
+
+    step1Form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(step1Form);
+      const chiefComplaints = formData.get("Chief complaints").trim();
+
+      if (!chiefComplaints) {
+        alert("Please provide chief complaints to proceed.");
+        return;
+      }
+
+      formData.forEach((value, key) => (allData[key] = value));
+      const inputText = `- Chief complaints: ${chiefComplaints}\n- Age: ${allData.Age || 'Not provided'}\n- Sex: ${allData.Sex || 'Not provided'}`;
+      followupSection.classList.remove('hidden');
+      followupQuestions.innerText = "⏳ Loading follow-up questions from AI...";
+
+      try {
+        const data = await fetchWithRetry("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${API_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: MODEL_ID,
+            max_tokens: 600,
+            messages: [
+              {
+                role: "user",
+                content: `Based on this patient data:\n${inputText}\nGenerate 3-5 concise follow-up questions to clarify the chief complaints. Format as a numbered list.`
+              }
+            ]
+          })
+        });
+
+        const questions = data.choices?.[0]?.message?.content || null;
+        if (!questions) {
+          followupQuestions.innerHTML = `<span class="error">⚠️ Error: No questions received.</span>`;
+          return;
+        }
+        followupQuestions.innerHTML = questions.replace(/\n/g, "<br>");
+      } catch (error) {
+        followupQuestions.innerHTML = `<span class="error">⚠️ ${error.message}</span>`;
+      }
     });
-    var text = await response.text();
-    if (text !== "Success") {
-      throw new Error(text);
-    }
-    status.innerText = "Name saved!";
-    status.className = "status";
-    document.getElementById("name").value = "";
-  } catch (error) {
-    status.innerText = "Error: " + error.message;
-    status.className = "status error";
-  }
-  btn.disabled = false;
-}
-</script>
+
+    nextToDetails.addEventListener('click', () => {
+      if (!followupAnswers.value.trim()) {
+        alert("Please answer the follow-up questions.");
+        return;
+      }
+      allData["Follow-up Answers"] = followupAnswers.value;
+      detailsSection.classList.remove('hidden');
+      followupSection.classList.add('hidden');
+    });
+
+    detailsForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(detailsForm);
+      formData.forEach((value, key) => (allData[key] = value));
+
+      const allText = Object.entries(allData).map(([k, v]) => `- ${k}: ${v}`).join('\n');
+      outputDiv.classList.remove('hidden');
+      output.innerText = "⏳ Getting diagnosis from AI...";
+
+      try {
+        const data = await fetchWithRetry("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${API_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: MODEL_ID,
+            max_tokens: 1000,
+            messages: [
+              {
+                role: "user",
+                content: `Based on this patient case:\n${allText}\nProvide:\n1. Provisional Diagnosis\n2. Differential Diagnosis (with % likelihood)\n3. Investigations\n4. Management Plan.\nFormat with headings.`
+              }
+            ]
+          })
+        });
+
+        const answer = data.choices?.[0]?.message?.content || null;
+        if (!answer) {
+          output.innerHTML = `<span class="error">⚠️ Error: No diagnosis received.</span>`;
+          return;
+        }
+
+        output.innerHTML = answer.replace(/\n/g, "<br>");
+        allData["AI Diagnosis Output"] = answer;
+        saveSection.classList.remove("hidden");
+
+      } catch (error) {
+        output.innerHTML = `<span class="error">⚠️ ${error.message}</span>`;
+      }
+    });
+
+    saveBtn.addEventListener('click', async () => {
+      saveStatus.innerText = "⏳ Saving to Google Sheet...";
+      try {
+        const response = await fetch(GOOGLE_SHEET_WEBHOOK_URL, {
+          method: "POST",
+          body: JSON.stringify(allData),
+          headers: { "Content-Type": "application/json" }
+        });
+
+        const result = await response.text();
+        if (result.toLowerCase().includes("saved")) {
+          saveStatus.innerHTML = "✅ Data saved successfully!";
+        } else {
+          saveStatus.innerHTML = "⚠️ Something went wrong: " + result;
+        }
+      } catch (err) {
+        saveStatus.innerHTML = "❌ Error: " + err.message;
+      }
+    });
+  </script>
 </body>
 </html>
