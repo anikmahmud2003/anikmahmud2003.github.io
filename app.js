@@ -1,0 +1,392 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  signInWithPopup,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+import { 
+  getFirestore, 
+  collection, 
+  addDoc, 
+  query, 
+  where, 
+  onSnapshot,
+  doc,
+  setDoc,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+// Your Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyD1oxAmrICDIl-KdObEl-VNPmxCEYT1uVM",
+  authDomain: "selfattendanceapp-4b3c9.firebaseapp.com",
+  projectId: "selfattendanceapp-4b3c9",
+  storageBucket: "selfattendanceapp-4b3c9.appspot.com",
+  messagingSenderId: "37841706450",
+  appId: "1:37841706450:web:1ac68857cc3c62c22dfc0b",
+  measurementId: "G-NB83P4VPXR"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+// DOM Elements
+const authScreen = document.getElementById("auth-screen");
+const homeScreen = document.getElementById("home-screen");
+const addClassScreen = document.getElementById("add-class-screen");
+const attendanceScreen = document.getElementById("attendance-screen");
+const googleSignInBtn = document.getElementById("google-signin-btn");
+const addClassBtn = document.getElementById("add-class-btn");
+const backBtn = document.getElementById("back-btn");
+const backToHomeBtn = document.getElementById("back-to-home-btn");
+const saveClassBtn = document.getElementById("save-class-btn");
+const classNameInput = document.getElementById("class-name");
+const classesList = document.getElementById("classes-list");
+const attendanceClassName = document.getElementById("attendance-class-name");
+const presentCount = document.getElementById("present-count");
+const absentCount = document.getElementById("absent-count");
+const attendancePercentage = document.getElementById("attendance-percentage");
+const calendarEl = document.getElementById("calendar");
+
+let currentClassId = null;
+let currentClassName = "";
+let currentMonth = new Date().getMonth();
+let currentYear = new Date().getFullYear();
+let attendanceData = {};
+
+// Auth State Listener
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    showScreen(homeScreen);
+    loadClasses();
+  } else {
+    showScreen(authScreen);
+  }
+});
+
+// Google Sign-In
+googleSignInBtn.addEventListener("click", async () => {
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (error) {
+    alert("Error signing in: " + error.message);
+  }
+});
+
+// Navigation
+addClassBtn.addEventListener("click", () => {
+  classNameInput.value = "";
+  showScreen(addClassScreen);
+});
+backBtn.addEventListener("click", () => showScreen(homeScreen));
+backToHomeBtn.addEventListener("click", () => showScreen(homeScreen));
+
+// Save New Class
+saveClassBtn.addEventListener("click", async () => {
+  const className = classNameInput.value.trim();
+  if (!className) return alert("Class name is required!");
+
+  try {
+    await addDoc(collection(db, "classes"), {
+      name: className,
+      userId: auth.currentUser.uid,
+      createdAt: new Date()
+    });
+    showScreen(homeScreen);
+  } catch (error) {
+    alert("Error saving class: " + error.message);
+  }
+});
+
+// Load Classes
+function loadClasses() {
+  classesList.innerHTML = "";
+  const q = query(collection(db, "classes"), where("userId", "==", auth.currentUser.uid));
+  
+  onSnapshot(q, (snapshot) => {
+    classesList.innerHTML = "";
+    snapshot.forEach((doc) => {
+      const classData = doc.data();
+      const classCard = document.createElement("div");
+      classCard.className = "class-card";
+      
+      // Calculate attendance percentage
+      let percentage = 0;
+      if (classData.totalDays && classData.presentDays) {
+        percentage = Math.round((classData.presentDays / classData.totalDays) * 100);
+      }
+      
+      classCard.innerHTML = `
+        <h3>${classData.name}</h3>
+        <p>Attendance: ${percentage}%</p>
+      `;
+      classCard.addEventListener("click", () => openAttendance(doc.id, classData.name));
+      classesList.appendChild(classCard);
+    });
+  });
+}
+
+// Open Attendance Screen
+async function openAttendance(classId, className) {
+  currentClassId = classId;
+  currentClassName = className;
+  attendanceClassName.textContent = className;
+  showScreen(attendanceScreen);
+  
+  // Load attendance data
+  const attendanceRef = collection(db, "classes", classId, "attendance");
+  const querySnapshot = await getDocs(attendanceRef);
+  
+  attendanceData = {};
+  querySnapshot.forEach((doc) => {
+    const dateStr = doc.id;
+    attendanceData[dateStr] = doc.data().status;
+  });
+  
+  renderCalendar();
+  updateStats();
+}
+
+// Render Calendar
+function renderCalendar() {
+  const monthNames = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"];
+  
+  const firstDay = new Date(currentYear, currentMonth, 1);
+  const lastDay = new Date(currentYear, currentMonth + 1, 0);
+  const daysInMonth = lastDay.getDate();
+  const startingDay = firstDay.getDay();
+  
+  let calendarHTML = `
+    <div class="calendar-header">
+      <button id="prev-month"><i class="fas fa-chevron-left"></i></button>
+      <h2>${monthNames[currentMonth]} ${currentYear}</h2>
+      <button id="next-month"><i class="fas fa-chevron-right"></i></button>
+    </div>
+    <div class="calendar-grid">
+      <div class="day-header">Sun</div>
+      <div class="day-header">Mon</div>
+      <div class="day-header">Tue</div>
+      <div class="day-header">Wed</div>
+      <div class="day-header">Thu</div>
+      <div class="day-header">Fri</div>
+      <div class="day-header">Sat</div>
+  `;
+  
+  // Add empty cells for days before the first day of the month
+  for (let i = 0; i < startingDay; i++) {
+    calendarHTML += `<div class="calendar-day empty"></div>`;
+  }
+  
+  // Add cells for each day of the month
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(currentYear, currentMonth, day);
+    const dateStr = date.toISOString().split('T')[0];
+    const status = attendanceData[dateStr] || "";
+    
+    calendarHTML += `
+      <div class="calendar-day ${status}" data-date="${dateStr}">
+        ${day}
+        ${status ? `<small>${status}</small>` : ''}
+      </div>
+    `;
+  }
+  
+  calendarEl.innerHTML = calendarHTML;
+  
+  // Add event listeners
+  document.getElementById("prev-month").addEventListener("click", () => {
+    currentMonth--;
+    if (currentMonth < 0) {
+      currentMonth = 11;
+      currentYear--;
+    }
+    renderCalendar();
+  });
+  
+  document.getElementById("next-month").addEventListener("click", () => {
+    currentMonth++;
+    if (currentMonth > 11) {
+      currentMonth = 0;
+      currentYear++;
+    }
+    renderCalendar();
+  });
+  
+  // Add click handlers for each day
+  document.querySelectorAll('.calendar-day:not(.empty)').forEach(dayEl => {
+    dayEl.addEventListener('click', () => {
+      const date = dayEl.dataset.date;
+      showAttendanceOptions(date);
+    });
+  });
+}
+
+// Show Attendance Options
+function showAttendanceOptions(date) {
+  const currentStatus = attendanceData[date] || "";
+  
+  const options = ["Present", "Absent", "Half Day"];
+  let optionsHTML = options.map(opt => `
+    <div class="attendance-option ${currentStatus === opt ? 'selected' : ''}" data-status="${opt}">
+      ${opt}
+    </div>
+  `).join('');
+  
+  const modal = document.createElement('div');
+  modal.className = 'attendance-modal';
+  modal.innerHTML = `
+    <div class="modal-content">
+      <h3>Mark Attendance for ${new Date(date).toDateString()}</h3>
+      ${optionsHTML}
+      <button id="save-attendance" class="btn">Save</button>
+      <button id="clear-attendance" class="btn">Clear</button>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Add event listeners
+  modal.querySelectorAll('.attendance-option').forEach(opt => {
+    opt.addEventListener('click', function() {
+      modal.querySelectorAll('.attendance-option').forEach(o => o.classList.remove('selected'));
+      this.classList.add('selected');
+    });
+  });
+  
+  modal.querySelector('#save-attendance').addEventListener('click', () => {
+    const selected = modal.querySelector('.attendance-option.selected');
+    if (selected) {
+      const status = selected.dataset.status;
+      markAttendance(date, status);
+    }
+    modal.remove();
+  });
+  
+  modal.querySelector('#clear-attendance').addEventListener('click', () => {
+    markAttendance(date, "");
+    modal.remove();
+  });
+  
+  // Close modal when clicking outside
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.remove();
+    }
+  });
+}
+
+// Mark Attendance
+async function markAttendance(date, status) {
+  try {
+    if (status) {
+      await setDoc(doc(db, "classes", currentClassId, "attendance", date), {
+        status: status,
+        date: date
+      });
+      attendanceData[date] = status;
+    } else {
+      // Delete the document if status is empty
+      await deleteDoc(doc(db, "classes", currentClassId, "attendance", date));
+      delete attendanceData[date];
+    }
+    
+    renderCalendar();
+    updateStats();
+    updateClassSummary();
+  } catch (error) {
+    alert("Error saving attendance: " + error.message);
+  }
+}
+
+// Update Stats
+function updateStats() {
+  const present = Object.values(attendanceData).filter(s => s === "Present").length;
+  const absent = Object.values(attendanceData).filter(s => s === "Absent").length;
+  const halfDay = Object.values(attendanceData).filter(s => s === "Half Day").length;
+  
+  presentCount.textContent = present;
+  absentCount.textContent = absent;
+  
+  const total = present + absent + halfDay;
+  const percentage = total > 0 ? Math.round((present + (halfDay * 0.5)) / total * 100) : 0;
+  attendancePercentage.textContent = percentage;
+}
+
+// Update Class Summary
+async function updateClassSummary() {
+  const attendanceRef = collection(db, "classes", currentClassId, "attendance");
+  const querySnapshot = await getDocs(attendanceRef);
+  
+  let present = 0;
+  let absent = 0;
+  let halfDay = 0;
+  
+  querySnapshot.forEach((doc) => {
+    const status = doc.data().status;
+    if (status === "Present") present++;
+    else if (status === "Absent") absent++;
+    else if (status === "Half Day") halfDay++;
+  });
+  
+  const total = present + absent + halfDay;
+  const percentage = total > 0 ? Math.round((present + (halfDay * 0.5)) / total * 100 ): 0;
+  
+  await setDoc(doc(db, "classes", currentClassId), {
+    presentDays: present + (halfDay * 0.5),
+    totalDays: total
+  }, { merge: true });
+}
+
+// Helper: Switch Screens
+function showScreen(screen) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.add("hidden"));
+  screen.classList.remove("hidden");
+}
+
+// Add some CSS for the modal
+const style = document.createElement('style');
+style.textContent = `
+  .attendance-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  .modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 400px;
+  }
+  .attendance-option {
+    padding: 10px;
+    margin: 5px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .attendance-option.selected {
+    background: #4285F4;
+    color: white;
+    border-color: #4285F4;
+  }
+  .attendance-option:hover {
+    background: #f0f0f0;
+  }
+  .attendance-option.selected:hover {
+    background: #3367d6;
+  }
+`;
+document.head.appendChild(style);
