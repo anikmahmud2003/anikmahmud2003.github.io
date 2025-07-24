@@ -268,27 +268,10 @@
   </div>
 
   <!-- Firebase SDK and App Code -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import { 
-      getAuth, 
-      GoogleAuthProvider, 
-      signInWithPopup,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-    import { 
-      getFirestore, 
-      collection, 
-      addDoc, 
-      query, 
-      where, 
-      onSnapshot,
-      doc,
-      setDoc,
-      getDocs,
-      deleteDoc
-    } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script>
     // Your Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyD1oxAmrICDIl-KdObEl-VNPmxCEYT1uVM",
@@ -301,10 +284,10 @@
     };
 
     // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const provider = new GoogleAuthProvider();
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const provider = new firebase.auth.GoogleAuthProvider();
 
     // DOM Elements
     const authScreen = document.getElementById("auth-screen");
@@ -331,7 +314,7 @@
     let attendanceData = {};
 
     // Auth State Listener
-    onAuthStateChanged(auth, (user) => {
+    auth.onAuthStateChanged((user) => {
       if (user) {
         showScreen(homeScreen);
         loadClasses();
@@ -343,8 +326,23 @@
     // Google Sign-In
     googleSignInBtn.addEventListener("click", async () => {
       try {
-        await signInWithPopup(auth, provider);
+        // Set the popup window dimensions
+        const width = 500;
+        const height = 600;
+        const left = (window.innerWidth - width) / 2;
+        const top = (window.innerHeight - height) / 2;
+        
+        // Sign in with popup and specify the window dimensions
+        await auth.signInWithPopup(provider, {
+          popupWindowFeatures: {
+            width,
+            height,
+            left,
+            top
+          }
+        });
       } catch (error) {
+        console.error("Error signing in:", error);
         alert("Error signing in: " + error.message);
       }
     });
@@ -363,10 +361,10 @@
       if (!className) return alert("Class name is required!");
 
       try {
-        await addDoc(collection(db, "classes"), {
+        await db.collection("classes").add({
           name: className,
           userId: auth.currentUser.uid,
-          createdAt: new Date()
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         showScreen(homeScreen);
       } catch (error) {
@@ -377,9 +375,9 @@
     // Load Classes
     function loadClasses() {
       classesList.innerHTML = "";
-      const q = query(collection(db, "classes"), where("userId", "==", auth.currentUser.uid));
+      const q = db.collection("classes").where("userId", "==", auth.currentUser.uid);
       
-      onSnapshot(q, (snapshot) => {
+      q.onSnapshot((snapshot) => {
         classesList.innerHTML = "";
         snapshot.forEach((doc) => {
           const classData = doc.data();
@@ -410,8 +408,8 @@
       showScreen(attendanceScreen);
       
       // Load attendance data
-      const attendanceRef = collection(db, "classes", classId, "attendance");
-      const querySnapshot = await getDocs(attendanceRef);
+      const attendanceRef = db.collection("classes").doc(classId).collection("attendance");
+      const querySnapshot = await attendanceRef.get();
       
       attendanceData = {};
       querySnapshot.forEach((doc) => {
@@ -556,14 +554,14 @@
     async function markAttendance(date, status) {
       try {
         if (status) {
-          await setDoc(doc(db, "classes", currentClassId, "attendance", date), {
+          await db.collection("classes").doc(currentClassId).collection("attendance").doc(date).set({
             status: status,
             date: date
           });
           attendanceData[date] = status;
         } else {
           // Delete the document if status is empty
-          await deleteDoc(doc(db, "classes", currentClassId, "attendance", date));
+          await db.collection("classes").doc(currentClassId).collection("attendance").doc(date).delete();
           delete attendanceData[date];
         }
         
@@ -591,8 +589,8 @@
 
     // Update Class Summary
     async function updateClassSummary() {
-      const attendanceRef = collection(db, "classes", currentClassId, "attendance");
-      const querySnapshot = await getDocs(attendanceRef);
+      const attendanceRef = db.collection("classes").doc(currentClassId).collection("attendance");
+      const querySnapshot = await attendanceRef.get();
       
       let present = 0;
       let absent = 0;
@@ -608,7 +606,7 @@
       const total = present + absent + halfDay;
       const percentage = total > 0 ? Math.round((present + (halfDay * 0.5)) / total * 100) : 0;
       
-      await setDoc(doc(db, "classes", currentClassId), {
+      await db.collection("classes").doc(currentClassId).set({
         presentDays: present + (halfDay * 0.5),
         totalDays: total
       }, { merge: true });
