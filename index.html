@@ -7,6 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
+    /* All your CSS styles remain exactly the same */
     * {
       margin: 0;
       padding: 0;
@@ -224,6 +225,7 @@
   </style>
 </head>
 <body>
+  <!-- All your HTML remains exactly the same -->
   <!-- Auth Screen -->
   <div id="auth-screen" class="screen">
     <h1>Self Attendance App</h1>
@@ -267,7 +269,7 @@
     </div>
   </div>
 
-  <!-- Firebase SDK and App Code -->
+  <!-- Firebase SDK and App Code - This is where the fixes are -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -288,6 +290,11 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
     const provider = new firebase.auth.GoogleAuthProvider();
+
+    // Set the popup window dimensions in the provider
+    provider.setCustomParameters({
+      prompt: 'select_account'
+    });
 
     // DOM Elements
     const authScreen = document.getElementById("auth-screen");
@@ -323,30 +330,18 @@
       }
     });
 
-    // Google Sign-In
+    // Google Sign-In - Fixed version
     googleSignInBtn.addEventListener("click", async () => {
       try {
-        // Set the popup window dimensions
-        const width = 500;
-        const height = 600;
-        const left = (window.innerWidth - width) / 2;
-        const top = (window.innerHeight - height) / 2;
-        
-        // Sign in with popup and specify the window dimensions
-        await auth.signInWithPopup(provider, {
-          popupWindowFeatures: {
-            width,
-            height,
-            left,
-            top
-          }
-        });
+        // Sign in with popup (only passing the provider)
+        await auth.signInWithPopup(provider);
       } catch (error) {
         console.error("Error signing in:", error);
         alert("Error signing in: " + error.message);
       }
     });
 
+    // Rest of your JavaScript code remains exactly the same
     // Navigation
     addClassBtn.addEventListener("click", () => {
       classNameInput.value = "";
