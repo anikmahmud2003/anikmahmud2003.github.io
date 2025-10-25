@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Online Exam</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .exam-info {
+            display: flex;
+            justify-content: space-between;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .question-container {
+            margin-bottom: 25px;
+            padding: 20px;
+            border: 1px solid #eaeaea;
+            border-radius: 8px;
+            background-color: #fff;
+        }
+        
+        .question {
+            margin-bottom: 15px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .options {
+            margin-left: 10px;
+        }
+        
+        .option {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .option:hover {
+            background-color: #f0f8ff;
+        }
+        
+        .option.selected {
+            background-color: #e1f5fe;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .option.correct {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+        }
+        
+        .option.incorrect {
+            background-color: #ffebee;
+            border-left: 4px solid #f44336;
+        }
+        
+        .explanation {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f9fbe7;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .actions {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        
+        button {
+            padding: 12px 25px;
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #0b7dda;
+        }
+        
+        .result-container {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .result-header {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .score {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .summary {
+            margin-bottom: 20px;
+        }
+        
+        .question-result {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: white;
+        }
+        
+        .correct-answer {
+            color: #4caf50;
+            font-weight: bold;
+        }
+        
+        .wrong-answer {
+            color: #f44336;
+            font-weight: bold;
+        }
+        
+        .marks-info {
+            text-align: center;
+            margin-top: 20px;
+            font-style: italic;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>MCQ Online Exam</h1>
+            <p>Answer all questions and submit to see your results</p>
+        </header>
+        
+        <div class="exam-info">
+            <div>Total Questions: <span id="total-questions">10</span></div>
+            <div>Marking: +1 for correct, -0.25 for wrong</div>
+        </div>
+        
+        <div id="questions-container">
+            <!-- Questions will be inserted here by JavaScript -->
+        </div>
+        
+        <div class="actions">
+            <button id="submit-btn">Submit Answers</button>
+        </div>
+        
+        <div id="result-container" class="result-container">
+            <h2 class="result-header">Exam Results</h2>
+            <div class="score">Your Score: <span id="score-value">0</span>/<span id="total-marks">10</span></div>
+            
+            <div class="summary">
+                <h3>Question-wise Results:</h3>
+                <div id="results-summary">
+                    <!-- Results will be inserted here by JavaScript -->
+                </div>
+            </div>
+            
+            <div class="marks-info">
+                <p>Marking Scheme: +1 mark for each correct answer, -0.25 marks for each wrong answer</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // MCQ Questions Data
+        const questions = [
+            {
+                question: "একটি '200V-40W' বাল্বের মধ্য দিয়ে কি পরিমান তড়িৎ প্রবাহিত হবে?",
+                options: ["0.05A", "0.2A", "0.5A", "0.02A"],
+                correctAnswer: 1,
+                explanation: "ক্ষমতা P = VI, I = 40/200 = 0.2A"
+            },
+            {
+                question: "নিচের কোনটির উপর রোধ নির্ভর করে না?",
+                options: ["উপাদান", "প্রস্থচ্ছেদের ক্ষেত্রফল", "তড়িৎ প্রবাহ", "পরিবাহকের দৈর্ঘ্য"],
+                correctAnswer: 2,
+                explanation: "পরিবাহীর রোধ চারটি বিষয়ের উপর নির্ভর করে- ১. পরিবাহীর দৈর্ঘ্য ২. পরিবাহীর প্রস্থচ্ছেদের ক্ষেত্রফল ৩. পরিবাহীর উপাদান ৪. পরিবাহীর তাপমাত্রা"
+            },
+            {
+                question: "একটি তারের দৈর্ঘ্য দ্বিগুণ করা হলে রোধ কি হবে?",
+                options: ["দ্বিগুণ", "অর্ধেক", "একই থাকবে", "রোধের মাত্রার উপর নির্ভর করবে"],
+                correctAnswer: 0,
+                explanation: "রোধ পরিবাহকের দৈর্ঘ্যের সমানুপাতিক এবং প্রস্থচ্ছেদের ক্ষেত্রফলের ব্যস্তানুপাতিক। অর্থাৎ, R = Pl/A"
+            },
+            {
+                question: "কির্ণফ (Kirchhoff)- এর দ্বিতীয় সূত্র নিচের কোনটি সংরক্ষণ নির্দেশ করে?",
+                options: ["ভর", "ভরবেগ", "আধান", "শক্তি"],
+                correctAnswer: 3,
+                explanation: "কির্শফ এর দ্বিতীয় সূত্র বা লুপ-উপপাদ্য সূত্র বা ভোল্টেজ সূত্র: কোনো বদ্ধ বর্তনীর অন্তর্গত মোট বিদ্যুচ্চালক শক্তি ওই বর্তনীর বিভিন্ন শাখাগুলোর রোধ এবং তাদের মধ্য দিয়ে প্রবাহিত সংশ্লিষ্ট বিদ্যুৎ প্রবাহ মাত্রার গুণফল সমূহের বীজগাণিতিক যোগফলের সমান। এটি শক্তির সংরক্ষণশীলতা মেনে চলে।"
+            },
+            {
+                question: "পৃথিবীর বিনতি কোণ শূন্য",
+                options: ["চৌম্বক মেরুতে", "চৌম্বক নিরক্ষরেখায়", "ভৌগলিক মেরুতে", "90° অক্ষাংশে"],
+                correctAnswer: 1,
+                explanation: "দুই মেরুতে বিনতি 90° এবং বিষুবরেখার বিনতি ০° হয়।"
+            },
+            {
+                question: "চৌম্বক সম্পর্কিত নিচের কোন এককটি সঠিক?",
+                options: ["চৌম্বক ফ্লাক্স ওয়েরস্টেড", "চৌম্বক প্রবেশ্যতা- ওয়েবার", "চৌম্বক ক্ষেত্র- টেসলা", "চৌম্বক ভ্রামক হেনরি"],
+                correctAnswer: 2,
+                explanation: "চৌম্বক ফ্লাক্স - ওয়েবার, চৌম্বক প্রবেশ্যতা - TmA/WbA-m, চৌম্বক ক্ষেত্র - টেসলা, চৌম্বক ভ্রামক - Am²"
+            },
+            {
+                question: "পৃথিবীর চৌম্বকীয় অক্ষ এবং ভৌগোলিক অক্ষ সমন্বয়ে তৈরি কোণের পরিমাণ",
+                options: ["90°", "0°", "17°", "23°"],
+                correctAnswer: 2,
+                explanation: "ভৌগোলিক উত্তর এবং দক্ষিণ মেরুর সংযোজক রেখাকে ভৌগোলিক অক্ষ বলে। তেমনি ভূ-চুম্বকের উত্তর এবং দক্ষিণ মেরুর সংযোজক রেখাকে ভূ-চৌম্বক অক্ষ বলে। ভৌগোলিক অক্ষের সাথে এই ভূ-চৌম্বক অক্ষ প্রায় 18° কোণ করে আছে। অপশনগুলোর মাঝে (C) ই সবচেয়ে কাছাকাছি।"
+            },
+            {
+                question: "অপটিক্যাল ফাইবার কোন পদ্ধতিতে কাজ করে?",
+                options: ["আলোকের প্রতিসরণ", "আলোকের পূর্ণ অভ্যন্তরীণ প্রতিফলন", "আলোকের প্রতিফলন", "আলোর ব্যতিচার"],
+                correctAnswer: 1,
+                explanation: "একটি তন্ত্র যা আলোকরশ্মি এক স্থান থেকে অন্য স্থানে পূর্ণ অভ্যন্তরীণ প্রতিফলনের মাধ্যমে পৌছাতে পারে তাকে আলোকরশ্মি তন্তু বা অপটিক্যাল ফাইবার বলে।"
+            },
+            {
+                question: "বাতাসে আলোর তরঙ্গ দৈর্ঘ্য হচ্ছে 4800 A। গ্লাসে আলোর তরঙ্গ দৈর্ঘ্য নিম্নের কোনটি?",
+                options: ["32A", "320A", "3200A", "কোনোটিই নয়"],
+                correctAnswer: 2,
+                explanation: "আমরা জানি, λ = λ₀/μ, μ = বাতাসের সাপেক্ষে আলোর প্রতিসরাঙ্ক। λ = 4800/1.5 = 3200A"
+            },
+            {
+                question: "আলোকের কোন ধর্মের জন্য পুকুরের ভেতর মাছকে কিছুটা উপরে দেখতে পাওয়া যায়?",
+                options: ["অপবর্তন", "সমবর্তন", "প্রতিসরণ", "প্রতিফলন"],
+                correctAnswer: 2,
+                explanation: "বায়ু থেকে পানি মাধ্যমে আলো প্রবেশের সময় কিছুটা বেকে যায় ফলে পানির মধ্যে মাছকে উপরে দেখা যায়।"
+            }
+        ];
+
+        // Initialize the exam
+        document.addEventListener('DOMContentLoaded', function() {
+            const questionsContainer = document.getElementById('questions-container');
+            const totalQuestionsElement = document.getElementById('total-questions');
+            const submitBtn = document.getElementById('submit-btn');
+            const resultContainer = document.getElementById('result-container');
+            const scoreValueElement = document.getElementById('score-value');
+            const totalMarksElement = document.getElementById('total-marks');
+            const resultsSummaryElement = document.getElementById('results-summary');
+            
+            // Set total questions
+            totalQuestionsElement.textContent = questions.length;
+            totalMarksElement.textContent = questions.length;
+            
+            // Create question elements
+            questions.forEach((q, index) => {
+                const questionElement = document.createElement('div');
+                questionElement.className = 'question-container';
+                questionElement.innerHTML = `
+                    <div class="question">${index + 1}. ${q.question}</div>
+                    <div class="options">
+                        ${q.options.map((option, i) => `
+                            <div class="option" data-question="${index}" data-option="${i}">
+                                ${String.fromCharCode(65 + i)}. ${option}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="explanation" id="explanation-${index}">
+                        <strong>Explanation:</strong> ${q.explanation}
+                    </div>
+                `;
+                questionsContainer.appendChild(questionElement);
+            });
+            
+            // Add click event to options
+            const options = document.querySelectorAll('.option');
+            options.forEach(option => {
+                option.addEventListener('click', function() {
+                    const questionIndex = parseInt(this.getAttribute('data-question'));
+                    const optionIndex = parseInt(this.getAttribute('data-option'));
+                    
+                    // Remove selected class from all options in this question
+                    const questionOptions = document.querySelectorAll(`.option[data-question="${questionIndex}"]`);
+                    questionOptions.forEach(opt => opt.classList.remove('selected'));
+                    
+                    // Add selected class to clicked option
+                    this.classList.add('selected');
+                });
+            });
+            
+            // Submit button event
+            submitBtn.addEventListener('click', function() {
+                let score = 0;
+                let resultsHTML = '';
+                
+                questions.forEach((q, index) => {
+                    const selectedOption = document.querySelector(`.option.selected[data-question="${index}"]`);
+                    const explanationElement = document.getElementById(`explanation-${index}`);
+                    const questionOptions = document.querySelectorAll(`.option[data-question="${index}"]`);
+                    
+                    let userAnswer = -1;
+                    let isCorrect = false;
+                    
+                    if (selectedOption) {
+                        userAnswer = parseInt(selectedOption.getAttribute('data-option'));
+                        isCorrect = userAnswer === q.correctAnswer;
+                        
+                        // Show explanation
+                        explanationElement.style.display = 'block';
+                        
+                        // Highlight correct and incorrect answers
+                        questionOptions.forEach(opt => {
+                            const optIndex = parseInt(opt.getAttribute('data-option'));
+                            if (optIndex === q.correctAnswer) {
+                                opt.classList.add('correct');
+                            } else if (optIndex === userAnswer && !isCorrect) {
+                                opt.classList.add('incorrect');
+                            }
+                        });
+                        
+                        // Calculate score
+                        if (isCorrect) {
+                            score += 1;
+                        } else {
+                            score -= 0.25;
+                        }
+                    }
+                    
+                    // Build results summary
+                    resultsHTML += `
+                        <div class="question-result">
+                            <p><strong>Question ${index + 1}:</strong> ${q.question}</p>
+                            <p>Your answer: ${selectedOption ? String.fromCharCode(65 + userAnswer) + '. ' + q.options[userAnswer] : 'Not answered'}</p>
+                            <p class="${isCorrect ? 'correct-answer' : 'wrong-answer'}">
+                                ${isCorrect ? '✓ Correct' : '✗ Incorrect'}
+                            </p>
+                            <p>Correct answer: ${String.fromCharCode(65 + q.correctAnswer)}. ${q.options[q.correctAnswer]}</p>
+                        </div>
+                    `;
+                });
+                
+                // Ensure score doesn't go below 0
+                score = Math.max(0, score);
+                
+                // Display results
+                scoreValueElement.textContent = score.toFixed(2);
+                resultsSummaryElement.innerHTML = resultsHTML;
+                resultContainer.style.display = 'block';
+                
+                // Scroll to results
+                resultContainer.scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+    </script>
+</body>
+</html>
