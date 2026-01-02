@@ -1,1 +1,350 @@
-https://drive.google.com/drive/folders/1tgKKO4rHFdNK7mSLLV4ao7sRjzoB5jK0
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fancy Google Drive Link</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            padding: 20px;
+        }
+        
+        .container {
+            text-align: center;
+            max-width: 800px;
+            padding: 30px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        h1 {
+            color: #fff;
+            margin-bottom: 10px;
+            font-weight: 600;
+            font-size: 2.8rem;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            color: #a8d0e6;
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.5;
+        }
+        
+        .drive-link-container {
+            perspective: 1000px;
+            margin: 40px 0;
+        }
+        
+        .drive-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 22px 40px;
+            background: linear-gradient(45deg, #4285F4, #34A853, #FBBC05, #EA4335);
+            background-size: 300% 300%;
+            color: white;
+            text-decoration: none;
+            border-radius: 15px;
+            font-size: 1.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            border: none;
+            cursor: pointer;
+            animation: gradientShift 8s ease infinite;
+            transform-style: preserve-3d;
+        }
+        
+        .drive-link:hover {
+            transform: translateY(-8px) rotateX(10deg);
+            box-shadow: 0 20px 35px rgba(0, 0, 0, 0.4);
+            animation: gradientShift 3s ease infinite;
+        }
+        
+        .drive-link:active {
+            transform: translateY(-2px);
+            transition: all 0.1s;
+        }
+        
+        .drive-link i {
+            font-size: 2.2rem;
+            margin-right: 15px;
+            filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
+        }
+        
+        .drive-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: -1;
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+        
+        .drive-link:hover::before {
+            transform: translateX(100%);
+        }
+        
+        .link-text {
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .pulse {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: -2;
+            opacity: 0;
+        }
+        
+        .drive-link:hover .pulse {
+            animation: pulse 1.5s ease-out infinite;
+        }
+        
+        .instructions {
+            color: #d1e8ff;
+            margin-top: 40px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #4285F4;
+        }
+        
+        .features {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 40px;
+            gap: 20px;
+        }
+        
+        .feature {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px 20px;
+            border-radius: 10px;
+            color: #fff;
+            flex: 1;
+            min-width: 180px;
+            max-width: 220px;
+            transition: transform 0.3s;
+        }
+        
+        .feature:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .feature i {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            color: #a8d0e6;
+        }
+        
+        .feature h3 {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1.1);
+                opacity: 0;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .drive-link {
+                font-size: 1.5rem;
+                padding: 18px 30px;
+            }
+            
+            .drive-link i {
+                font-size: 1.9rem;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .drive-link {
+                font-size: 1.3rem;
+                padding: 16px 25px;
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .drive-link i {
+                margin-right: 0;
+                font-size: 1.7rem;
+            }
+            
+            .subtitle {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Google Drive Folder Access</h1>
+        <p class="subtitle">Click the button below to access the shared Google Drive folder. This link will open directly in your browser.</p>
+        
+        <div class="drive-link-container">
+            <a href="https://drive.google.com/drive/folders/1tgKKO4rHFdNK7mSLLV4ao7sRjzoB5jK0" 
+               target="_blank" 
+               class="drive-link"
+               id="driveLink">
+                <i class="fab fa-google-drive"></i>
+                <span class="link-text">Open Google Drive Folder</span>
+                <div class="pulse"></div>
+            </a>
+        </div>
+        
+        <div class="instructions">
+            <p><strong>Note:</strong> This link will open the Google Drive folder in a new tab. You need to be signed in to your Google account to access the content. If you have trouble accessing the folder, please ensure you have the necessary permissions.</p>
+        </div>
+        
+        <div class="features">
+            <div class="feature">
+                <i class="fas fa-shield-alt"></i>
+                <h3>Secure Access</h3>
+                <p>Direct link to the official Google Drive service</p>
+            </div>
+            <div class="feature">
+                <i class="fas fa-external-link-alt"></i>
+                <h3>New Tab</h3>
+                <p>Opens in a new browser tab for convenience</p>
+            </div>
+            <div class="feature">
+                <i class="fas fa-folder-open"></i>
+                <h3>Folder View</h3>
+                <p>Browse all files and subfolders easily</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add interactive effects
+        document.addEventListener('DOMContentLoaded', function() {
+            const driveLink = document.getElementById('driveLink');
+            const container = document.querySelector('.container');
+            
+            // Add click confirmation effect
+            driveLink.addEventListener('click', function(e) {
+                // Create a ripple effect
+                const ripple = document.createElement('span');
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+                
+                ripple.style.cssText = `
+                    position: absolute;
+                    border-radius: 50%;
+                    background: rgba(255, 255, 255, 0.7);
+                    transform: scale(0);
+                    animation: ripple 0.6s linear;
+                    width: ${size}px;
+                    height: ${size}px;
+                    top: ${y}px;
+                    left: ${x}px;
+                    pointer-events: none;
+                `;
+                
+                this.appendChild(ripple);
+                
+                // Remove ripple after animation completes
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+                
+                // Briefly change button text
+                const originalText = this.querySelector('.link-text').textContent;
+                this.querySelector('.link-text').textContent = 'Opening...';
+                
+                setTimeout(() => {
+                    this.querySelector('.link-text').textContent = originalText;
+                }, 1000);
+            });
+            
+            // Add mouse movement parallax effect to container
+            document.addEventListener('mousemove', function(e) {
+                const xAxis = (window.innerWidth / 2 - e.pageX) / 25;
+                const yAxis = (window.innerHeight / 2 - e.pageY) / 25;
+                
+                container.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+            });
+            
+            // Add keyframe animation for ripple effect
+            const styleSheet = document.createElement('style');
+            styleSheet.textContent = `
+                @keyframes ripple {
+                    to {
+                        transform: scale(4);
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(styleSheet);
+            
+            // Add a message when the link is opened
+            driveLink.addEventListener('click', function() {
+                console.log('Opening Google Drive folder...');
+            });
+        });
+    </script>
+</body>
+</html>
