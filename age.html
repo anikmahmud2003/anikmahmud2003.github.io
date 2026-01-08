@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Age Tracker - Real-Time Age Increase</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 25px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .dob-display {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #a3d9ff;
+        }
+
+        .current-time {
+            font-size: 1.2rem;
+            color: #90ee90;
+            margin-top: 10px;
+        }
+
+        .age-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .age-box {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 20px;
+            padding: 30px 20px;
+            min-width: 170px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .age-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+        }
+
+        .age-box:hover {
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .age-value {
+            font-size: 4rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            font-family: 'Courier New', monospace;
+        }
+
+        .age-label {
+            font-size: 1.3rem;
+            color: #ffdd99;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+        }
+
+        .age-details {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .age-details h2 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: #ffdd99;
+        }
+
+        .age-details p {
+            font-size: 1.4rem;
+            line-height: 1.6;
+            color: #fff;
+        }
+
+        .total-seconds {
+            font-size: 1.3rem;
+            color: #90ee90;
+            margin-top: 10px;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            width: 100%;
+            margin-bottom: 40px;
+        }
+
+        .stat-box {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-title {
+            font-size: 1.2rem;
+            color: #a3d9ff;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ffdd99;
+        }
+
+        .apk-instructions {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 30px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .apk-instructions h3 {
+            color: #ffdd99;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .apk-instructions ol {
+            padding-left: 25px;
+            line-height: 1.6;
+        }
+
+        .apk-instructions li {
+            margin-bottom: 12px;
+            color: #fff;
+        }
+
+        .highlight {
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            padding: 2px 8px;
+            border-radius: 5px;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            width: 100%;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .heart {
+            color: #ff4d4d;
+            animation: heartbeat 1.5s infinite;
+            display: inline-block;
+        }
+
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            5% { transform: scale(1.1); }
+            10% { transform: scale(1); }
+            15% { transform: scale(1.1); }
+            20% { transform: scale(1); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .age-box {
+                min-width: 140px;
+                padding: 25px 15px;
+            }
+            
+            .age-value {
+                font-size: 3.2rem;
+            }
+            
+            .age-label {
+                font-size: 1.1rem;
+            }
+            
+            .age-container {
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .age-box {
+                min-width: 120px;
+                padding: 20px 10px;
+            }
+            
+            .age-value {
+                font-size: 2.5rem;
+            }
+            
+            .age-label {
+                font-size: 1rem;
+            }
+            
+            .age-container {
+                gap: 10px;
+            }
+            
+            .dob-display {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-user-clock"></i> My Age Tracker</h1>
+            <div class="dob-display">Date of Birth: <span class="highlight">30th August 2003</span></div>
+            <div class="current-time" id="currentDateTime">Loading current time...</div>
+        </header>
+
+        <div class="age-container">
+            <div class="age-box">
+                <div class="age-value" id="years">0</div>
+                <div class="age-label">Years</div>
+            </div>
+            <div class="age-box">
+                <div class="age-value" id="months">0</div>
+                <div class="age-label">Months</div>
+            </div>
+            <div class="age-box">
+                <div class="age-value" id="days">0</div>
+                <div class="age-label">Days</div>
+            </div>
+            <div class="age-box">
+                <div class="age-value" id="hours">0</div>
+                <div class="age-label">Hours</div>
+            </div>
+            <div class="age-box">
+                <div class="age-value" id="minutes">0</div>
+                <div class="age-label">Minutes</div>
+            </div>
+            <div class="age-box">
+                <div class="age-value" id="seconds">0</div>
+                <div class="age-label">Seconds</div>
+            </div>
+        </div>
+
+        <div class="age-details">
+            <h2><i class="fas fa-info-circle"></i> Your Current Age</h2>
+            <p id="fullAge">Calculating your exact age...</p>
+            <div class="total-seconds" id="totalSeconds">Total seconds lived: 0</div>
+        </div>
+
+        <div class="stats-container">
+            <div class="stat-box">
+                <div class="stat-title"><i class="fas fa-calendar-alt"></i> Next Birthday</div>
+                <div class="stat-value" id="nextBirthday">Calculating...</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-title"><i class="fas fa-moon"></i> Days Lived</div>
+                <div class="stat-value" id="totalDays">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-title"><i class="fas fa-heartbeat"></i> Heartbeats</div>
+                <div class="stat-value" id="heartbeats">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-title"><i class="fas fa-birthday-cake"></i> Birthdays Celebrated</div>
+                <div class="stat-value" id="birthdaysCelebrated">0</div>
+            </div>
+        </div>
+
+     
+        <div class="footer">
+            Made with <span class="heart"><i class="fas fa-heart"></i></span> | Your age increases every second! 
+            <div style="margin-top: 10px; font-size: 0.9rem;">Last updated: <span id="lastUpdate">Just now</span></div>
+        </div>
+    </div>
+
+    <script>
+        // Your date of birth: 30th August 2003
+        const dob = new Date(2003, 7, 30, 0, 0, 0); // Month is 0-indexed (7 = August)
+        
+        // DOM Elements
+        const yearsElement = document.getElementById('years');
+        const monthsElement = document.getElementById('months');
+        const daysElement = document.getElementById('days');
+        const hoursElement = document.getElementById('hours');
+        const minutesElement = document.getElementById('minutes');
+        const secondsElement = document.getElementById('seconds');
+        const fullAgeElement = document.getElementById('fullAge');
+        const totalSecondsElement = document.getElementById('totalSeconds');
+        const totalDaysElement = document.getElementById('totalDays');
+        const heartbeatsElement = document.getElementById('heartbeats');
+        const birthdaysCelebratedElement = document.getElementById('birthdaysCelebrated');
+        const nextBirthdayElement = document.getElementById('nextBirthday');
+        const currentDateTimeElement = document.getElementById('currentDateTime');
+        const lastUpdateElement = document.getElementById('lastUpdate');
+        
+        // Function to calculate precise age
+        function calculateAge() {
+            const now = new Date();
+            
+            // Update current date/time display
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            currentDateTimeElement.textContent = `Current Time: ${now.toLocaleDateString('en-US', options)}`;
+            
+            // Calculate total difference in milliseconds
+            const diffMs = now - dob;
+            
+            // Calculate years
+            let years = now.getFullYear() - dob.getFullYear();
+            let months = now.getMonth() - dob.getMonth();
+            let days = now.getDate() - dob.getDate();
+            let hours = now.getHours() - dob.getHours();
+            let minutes = now.getMinutes() - dob.getMinutes();
+            let seconds = now.getSeconds() - dob.getSeconds();
+            
+            // Adjust for negative values
+            if (seconds < 0) {
+                seconds += 60;
+                minutes--;
+            }
+            
+            if (minutes < 0) {
+                minutes += 60;
+                hours--;
+            }
+            
+            if (hours < 0) {
+                hours += 24;
+                days--;
+            }
+            
+            if (days < 0) {
+                // Get days in previous month
+                const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+                days += prevMonth.getDate();
+                months--;
+            }
+            
+            if (months < 0) {
+                months += 12;
+                years--;
+            }
+            
+            // Update age display
+            yearsElement.textContent = years;
+            monthsElement.textContent = months;
+            daysElement.textContent = days;
+            hoursElement.textContent = hours;
+            minutesElement.textContent = minutes;
+            secondsElement.textContent = seconds;
+            
+            // Update full age text
+            fullAgeElement.textContent = `You are ${years} years, ${months} months, ${days} days, ${hours} hours, ${minutes} minutes, and ${seconds} seconds old`;
+            
+            // Calculate total seconds lived
+            const totalSeconds = Math.floor(diffMs / 1000);
+            totalSecondsElement.textContent = `Total seconds lived: ${totalSeconds.toLocaleString()}`;
+            
+            // Calculate total days lived
+            const totalDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            totalDaysElement.textContent = totalDays.toLocaleString();
+            
+            // Estimate heartbeats (average 72 bpm)
+            const heartbeats = Math.floor(totalSeconds * 72 / 60);
+            heartbeatsElement.textContent = heartbeats.toLocaleString();
+            
+            // Calculate birthdays celebrated
+            const birthdays = now.getFullYear() - dob.getFullYear();
+            birthdaysCelebratedElement.textContent = birthdays;
+            
+            // Calculate next birthday
+            let nextBirthday = new Date(now.getFullYear(), dob.getMonth(), dob.getDate());
+            if (nextBirthday < now) {
+                nextBirthday.setFullYear(nextBirthday.getFullYear() + 1);
+            }
+            
+            const nextBirthdayFormatted = nextBirthday.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            nextBirthdayElement.textContent = nextBirthdayFormatted;
+            
+            // Update last update time
+            lastUpdateElement.textContent = now.toLocaleTimeString();
+            
+            // Add visual effect to seconds counter
+            secondsElement.classList.add('pulse');
+            setTimeout(() => {
+                secondsElement.classList.remove('pulse');
+            }, 500);
+        }
+        
+        // Initialize and update every second
+        calculateAge();
+        setInterval(calculateAge, 1000);
+        
+        // Add initial animation
+        document.addEventListener('DOMContentLoaded', function() {
+            const ageBoxes = document.querySelectorAll('.age-box');
+            ageBoxes.forEach((box, index) => {
+                box.style.transform = 'translateY(30px)';
+                box.style.opacity = '0';
+                
+                setTimeout(() => {
+                    box.style.transition = 'all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                    box.style.transform = 'translateY(0)';
+                    box.style.opacity = '1';
+                }, 100 * index);
+            });
+            
+            // Animate stats
+            const statBoxes = document.querySelectorAll('.stat-box');
+            statBoxes.forEach((box, index) => {
+                box.style.transform = 'scale(0.8)';
+                box.style.opacity = '0';
+                
+                setTimeout(() => {
+                    box.style.transition = 'all 0.6s ease';
+                    box.style.transform = 'scale(1)';
+                    box.style.opacity = '1';
+                }, 500 + (100 * index));
+            });
+        });
+    </script>
+</body>
+</html>
